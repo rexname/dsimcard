@@ -342,6 +342,57 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debounce timeout for search
     let searchTimeout;
 
+    // Check URL parameters for auto-actions
+    const urlParams = new URLSearchParams(window.location.search);
+    const deviceParam = urlParams.get('device');
+    const actionParam = urlParams.get('action');
+
+    // Auto-open send SMS modal if action=send and device specified
+    if (actionParam === 'send' && deviceParam) {
+        // Wait a bit for modal elements to be ready
+        setTimeout(() => {
+            // Find and select the device in modal
+            const deviceOption = document.querySelector(`.device-option[data-device-id="${deviceParam}"]`);
+            if (deviceOption) {
+                // Select device first
+                deviceOption.click();
+
+                // Wait for device selection to take effect, then open modal and proceed
+                setTimeout(() => {
+                    // Open modal directly (don't click the button)
+                    modal.classList.remove('hidden');
+                    currentStep = 'device';
+                    showStep('device');
+
+                    // Wait a bit more, then click Next automatically
+                    setTimeout(() => {
+                        const nextBtn = document.getElementById('next-btn');
+                        if (nextBtn && !nextBtn.disabled) {
+                            nextBtn.click();
+                        }
+                    }, 300);
+                }, 200);
+            }
+        }, 100);
+    }
+
+    // Auto-set device filter if device parameter exists
+    if (deviceParam) {
+        setTimeout(() => {
+            const deviceFilterOutbox = document.getElementById('device-filter-outbox');
+            const deviceFilterSent = document.getElementById('device-filter-sent');
+
+            if (deviceFilterOutbox) {
+                deviceFilterOutbox.value = deviceParam;
+                performOutboxSearch();
+            }
+            if (deviceFilterSent) {
+                deviceFilterSent.value = deviceParam;
+                performSentSearch();
+            }
+        }, 100);
+    }
+
     // Tab switching
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -586,11 +637,12 @@ sendBtn.addEventListener('click', async (e) => {
 
         if (response.ok) {
             showMessage('SMS sent successfully!', 'success');
+            // Close modal first
+            closeModalHandler();
+            // Then redirect to clean URL (without parameters) after a short delay
             setTimeout(() => {
-                closeModalHandler();
-                // Refresh the outbox table
-                location.reload();
-            }, 1500);
+                window.location.href = '/outbox';
+            }, 500);
         } else {
             showMessage(result.error || 'Failed to send SMS', 'error');
         }

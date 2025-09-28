@@ -51,11 +51,11 @@
             </div>
 
             <div class="flex gap-3">
-                <a href="{{ url_for('dashboard.send_sms', phone_id=phone.ID) }}"
+                <a href="{{ url_for('dashboard.outbox') }}?device={{ phone.ID }}&action=send"
                    class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center btn-hover">
                     Send SMS
                 </a>
-                <a href="{{ url_for('dashboard.view_sms', phone_id=phone.ID) }}"
+                <a href="{{ url_for('dashboard.inbox') }}?device={{ phone.ID }}"
                    class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200 text-center btn-hover">
                     View Messages
                 </a>

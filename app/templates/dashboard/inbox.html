@@ -110,6 +110,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const originalRows = Array.from(inboxList.querySelectorAll('tr'));
     const showingCount = document.getElementById('showing-count');
 
+    // Check URL parameters for auto-filtering
+    const urlParams = new URLSearchParams(window.location.search);
+    const deviceParam = urlParams.get('device');
+
+    // Auto-set device filter if device parameter exists
+    if (deviceParam) {
+        setTimeout(() => {
+            deviceFilter.value = deviceParam;
+            performSearch();
+        }, 100);
+    }
+
     // Real-time search with debouncing
     let searchTimeout;
     function performSearch() {
