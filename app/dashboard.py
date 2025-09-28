@@ -152,7 +152,12 @@ def api_messages(phone_id):
 def inbox():
     from .models import Inbox
     inbox = Inbox.query.order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
-    return render_template('dashboard/inbox.html', inbox=inbox)
+    phones = Phones.query.all()
+    # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
+    def natural_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
+    phones = sorted(phones, key=natural_key)
+    return render_template('dashboard/inbox.html', inbox=inbox, phones=phones)
 
 # Route Outbox
 @dashboard_bp.route('/outbox')

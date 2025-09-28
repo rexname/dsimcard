@@ -7,8 +7,9 @@
         <p class="text-gray-600">View received SMS messages</p>
     </div>
 
-    <!-- Search Bar -->
-    <div class="mb-6">
+    <!-- Search and Filter Bar -->
+    <div class="mb-6 space-y-4">
+        <!-- Search Bar -->
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,6 +18,22 @@
             </div>
             <input type="text" id="search-inbox" placeholder="Search messages by sender, content, or date..."
                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+        </div>
+
+        <!-- Device Filter -->
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+                <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                <label for="device-filter" class="text-sm font-medium text-gray-700">Filter by Device:</label>
+            </div>
+            <select id="device-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                <option value="">All Devices</option>
+                {% for phone in phones %}
+                <option value="{{ phone.ID }}">{{ phone.ID }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 
@@ -27,6 +44,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -37,6 +55,9 @@
                     <tr class="hover:bg-gray-50 transition-colors duration-150 table-row">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ sms.ReceivingDateTime.strftime('%Y-%m-%d %H:%M:%S') if sms.ReceivingDateTime else 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ sms.RecipientID or 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ sms.SenderNumber }}
@@ -55,7 +76,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="px-6 py-12 text-center">
+                        <td colspan="5" class="px-6 py-12 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                             </svg>
@@ -84,40 +105,53 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-inbox');
+    const deviceFilter = document.getElementById('device-filter');
     const inboxList = document.getElementById('inbox-list');
     const originalRows = Array.from(inboxList.querySelectorAll('tr'));
     const showingCount = document.getElementById('showing-count');
 
     // Real-time search with debouncing
     let searchTimeout;
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedDevice = deviceFilter.value;
+        let visibleCount = 0;
+
+        originalRows.forEach((row, index) => {
+            if (index === originalRows.length - 1 && row.querySelector('td[colspan]')) {
+                // Skip the "no messages" row
+                return;
+            }
+
+            const textContent = row.textContent.toLowerCase();
+            const deviceCell = row.cells[1]; // Device column is now index 1
+            const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
+
+            const matchesSearch = textContent.includes(searchTerm);
+            const matchesDevice = !selectedDevice || deviceId === selectedDevice;
+
+            const isVisible = matchesSearch && matchesDevice;
+            row.style.display = isVisible ? '' : 'none';
+
+            if (isVisible) visibleCount++;
+        });
+
+        showingCount.textContent = visibleCount;
+
+        // Hide "no messages" row if there are visible messages
+        const noMessagesRow = originalRows.find(row => row.querySelector('td[colspan]'));
+        if (noMessagesRow) {
+            noMessagesRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
     searchInput.addEventListener('input', function(e) {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            let visibleCount = 0;
-
-            originalRows.forEach((row, index) => {
-                if (index === originalRows.length - 1 && row.querySelector('td[colspan]')) {
-                    // Skip the "no messages" row
-                    return;
-                }
-
-                const textContent = row.textContent.toLowerCase();
-                const isVisible = textContent.includes(searchTerm);
-                row.style.display = isVisible ? '' : 'none';
-
-                if (isVisible) visibleCount++;
-            });
-
-            showingCount.textContent = visibleCount;
-
-            // Hide "no messages" row if there are visible messages
-            const noMessagesRow = originalRows.find(row => row.querySelector('td[colspan]'));
-            if (noMessagesRow) {
-                noMessagesRow.style.display = visibleCount === 0 ? '' : 'none';
-            }
-        }, 300); // 300ms debounce
+        searchTimeout = setTimeout(performSearch, 300); // 300ms debounce
     });
+
+    // Device filter
+    deviceFilter.addEventListener('change', performSearch);
 
     // Auto refresh functionality
     document.addEventListener('autoRefreshToggle', function(e) {
