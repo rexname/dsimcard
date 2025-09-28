@@ -159,6 +159,74 @@ def inbox():
     phones = sorted(phones, key=natural_key)
     return render_template('dashboard/inbox.html', inbox=inbox, phones=phones)
 
+# API Route to delete outbox messages
+@dashboard_bp.route('/api/outbox/delete', methods=['POST'])
+def delete_outbox_messages():
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        data = request.get_json()
+        message_ids = data.get('message_ids', [])
+
+        if not message_ids:
+            return jsonify({'error': 'No message IDs provided'}), 400
+
+        from .models import Outbox
+
+        # Delete messages with the provided IDs
+        deleted_count = Outbox.query.filter(Outbox.ID.in_(message_ids)).delete()
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {deleted_count} message(s)',
+            'deleted_count': deleted_count
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Error deleting outbox messages: {str(e)}')
+        return jsonify({'error': 'Failed to delete messages'}), 500
+
+# API Route to delete sent messages
+@dashboard_bp.route('/api/sent/delete', methods=['POST'])
+def delete_sent_messages():
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        data = request.get_json()
+        message_ids = data.get('message_ids', [])
+
+        if not message_ids:
+            return jsonify({'error': 'No message IDs provided'}), 400
+
+        # Convert message_ids to integers
+        try:
+            message_ids = [int(mid) for mid in message_ids]
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid message IDs format'}), 400
+
+        from .models import Sentitems
+
+        # Delete messages with the provided IDs
+        deleted_count = Sentitems.query.filter(Sentitems.ID.in_(message_ids)).delete()
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {deleted_count} sent message(s)',
+            'deleted_count': deleted_count
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Error deleting sent messages: {str(e)}')
+        return jsonify({'error': 'Failed to delete sent messages'}), 500
+
 # Route Outbox
 @dashboard_bp.route('/outbox')
 def outbox():

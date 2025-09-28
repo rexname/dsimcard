@@ -30,18 +30,18 @@
     <div class="mb-6">
         <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8">
-                <button id="tab-outbox" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-blue-500 text-blue-600">
-                    Outbox ({{ outbox|length }})
-                </button>
-                <button id="tab-sent" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button id="tab-sent" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-blue-500 text-blue-600">
                     Sent Messages ({{ sentitems|length }})
+                </button>
+                <button id="tab-outbox" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Outbox ({{ outbox|length }})
                 </button>
             </nav>
         </div>
     </div>
 
     <!-- Outbox Section -->
-    <div id="outbox-section" class="tab-content">
+    <div id="outbox-section" class="tab-content hidden">
         <div class="mb-6 space-y-4">
             <!-- Search Bar -->
             <div class="relative">
@@ -54,7 +54,8 @@
                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
             </div>
 
-            <!-- Device Filter -->
+        <!-- Device Filter and Actions -->
+        <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="flex items-center">
                     <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,6 +70,20 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- Delete Actions -->
+            <div class="flex items-center space-x-3">
+                <button id="select-all-outbox-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    Select All
+                </button>
+                <button id="delete-selected-outbox-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete Selected
+                </button>
+            </div>
+        </div>
         </div>
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -76,6 +91,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-outbox-checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
@@ -85,7 +103,10 @@
                     </thead>
                     <tbody id="outbox-list" class="bg-white divide-y divide-gray-200">
                         {% for sms in outbox %}
-                        <tr class="hover:bg-gray-50 transition-colors duration-150 table-row">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150 table-row cursor-pointer outbox-row" data-message-id="{{ sms.ID }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <input type="checkbox" class="outbox-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" value="{{ sms.ID }}">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ sms.InsertIntoDB.strftime('%Y-%m-%d %H:%M:%S') if sms.InsertIntoDB else 'N/A' }}
                             </td>
@@ -111,7 +132,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
+                            <td colspan="6" class="px-6 py-12 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                                 </svg>
@@ -126,8 +147,187 @@
         </div>
     </div>
 
+    <!-- Outbox Message Detail Modal -->
+    <div id="outbox-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Outbox Message Details</h3>
+                <button id="close-outbox-modal" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4">
+                <div class="space-y-4">
+                    <!-- Date & Time -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Date & Time</p>
+                            <p id="outbox-modal-datetime" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Device -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Device</p>
+                            <p id="outbox-modal-device" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Recipient -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Recipient</p>
+                            <p id="outbox-modal-recipient" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Status</p>
+                            <span id="outbox-modal-status" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"></span>
+                        </div>
+                    </div>
+
+                    <!-- Message Content -->
+                    <div class="border-t pt-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Message</p>
+                                <div id="outbox-modal-message" class="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap break-words"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end p-4 border-t bg-gray-50">
+                <button id="close-outbox-modal-footer" class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sent Messages Detail Modal -->
+    <div id="sent-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Sent Message Details</h3>
+                <button id="close-sent-modal" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4">
+                <div class="space-y-4">
+                    <!-- Date & Time -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Date & Time</p>
+                            <p id="sent-modal-datetime" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Device -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Device</p>
+                            <p id="sent-modal-device" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Recipient -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Recipient</p>
+                            <p id="sent-modal-recipient" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Time -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Delivery Time</p>
+                            <p id="sent-modal-delivery" class="text-sm text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Status</p>
+                            <span id="sent-modal-status" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"></span>
+                        </div>
+                    </div>
+
+                    <!-- Message Content -->
+                    <div class="border-t pt-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Message</p>
+                                <div id="sent-modal-message" class="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap break-words"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end p-4 border-t bg-gray-50">
+                <button id="close-sent-modal-footer" class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sent Messages Section -->
-    <div id="sent-section" class="tab-content hidden">
+    <div id="sent-section" class="tab-content">
         <div class="mb-6 space-y-4">
             <!-- Search Bar -->
             <div class="relative">
@@ -140,7 +340,8 @@
                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
             </div>
 
-            <!-- Device Filter -->
+        <!-- Device Filter and Actions -->
+        <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="flex items-center">
                     <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,6 +356,20 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- Delete Actions -->
+            <div class="flex items-center space-x-3">
+                <button id="select-all-sent-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    Select All
+                </button>
+                <button id="delete-selected-sent" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete Selected
+                </button>
+            </div>
+        </div>
         </div>
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -162,6 +377,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-sent" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
@@ -172,7 +390,10 @@
                     </thead>
                     <tbody id="sent-list" class="bg-white divide-y divide-gray-200">
                         {% for sms in sentitems %}
-                        <tr class="hover:bg-gray-50 transition-colors duration-150 table-row">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150 table-row cursor-pointer sent-row" data-message-id="{{ sms.ID }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <input type="checkbox" class="sent-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" data-message-id="{{ sms.ID }}">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ sms.SendingDateTime.strftime('%Y-%m-%d %H:%M:%S') if sms.SendingDateTime else 'N/A' }}
                             </td>
@@ -203,7 +424,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                                 </svg>
@@ -221,7 +442,7 @@
     <!-- Pagination (Simple) -->
     <div class="mt-6 flex items-center justify-between">
         <div class="text-sm text-gray-700">
-            <span id="current-tab-info">Showing <span id="showing-count">{{ outbox|length }}</span> queued messages</span>
+            <span id="current-tab-info">Showing <span id="showing-count">{{ sentitems|length }}</span> sent messages</span>
         </div>
         <div class="flex space-x-2">
             <button id="prev-page" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
@@ -439,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textContent = row.textContent.toLowerCase();
-            const deviceCell = row.cells[1]; // Device column is index 1
+            const deviceCell = row.cells[2]; // Device column is index 2 (after checkbox and date)
             const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
 
             const matchesSearch = textContent.includes(searchTerm);
@@ -455,6 +676,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('tab-outbox').classList.contains('active')) {
             showingCount.textContent = visibleCount;
         }
+
+        // Update select all state and delete button after search
+        updateOutboxSelectAllState();
+        updateOutboxDeleteButtonState();
+        selectAllOutboxBtn.textContent = 'Select All';
     }
 
     searchOutbox.addEventListener('input', function(e) {
@@ -481,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textContent = row.textContent.toLowerCase();
-            const deviceCell = row.cells[1]; // Device column is index 1
+            const deviceCell = row.cells[2]; // Device column is index 2 (after checkbox and date)
             const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
 
             const matchesSearch = textContent.includes(searchTerm);
@@ -510,6 +736,445 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('autoRefreshToggle', function(e) {
         if (e.detail) {
             console.log('Auto refresh enabled for outbox & sent messages');
+        }
+    });
+
+    // Initialize sent messages count since it's the default tab
+    performSentSearch();
+});
+
+// Outbox modal and delete functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Outbox modal elements
+    const outboxModal = document.getElementById('outbox-modal');
+    const closeOutboxModalBtn = document.getElementById('close-outbox-modal');
+    const closeOutboxModalFooterBtn = document.getElementById('close-outbox-modal-footer');
+    const outboxModalDateTime = document.getElementById('outbox-modal-datetime');
+    const outboxModalDevice = document.getElementById('outbox-modal-device');
+    const outboxModalRecipient = document.getElementById('outbox-modal-recipient');
+    const outboxModalStatus = document.getElementById('outbox-modal-status');
+    const outboxModalMessage = document.getElementById('outbox-modal-message');
+
+    // Outbox delete elements
+    const selectAllOutboxCheckbox = document.getElementById('select-all-outbox-checkbox');
+    const selectAllOutboxBtn = document.getElementById('select-all-outbox-btn');
+    const deleteSelectedOutboxBtn = document.getElementById('delete-selected-outbox-btn');
+    const outboxCheckboxes = document.querySelectorAll('.outbox-checkbox');
+
+    // Function to update outbox delete button state
+    function updateOutboxDeleteButtonState() {
+        const checkedBoxes = document.querySelectorAll('.outbox-checkbox:checked');
+        const hasSelection = checkedBoxes.length > 0;
+        deleteSelectedOutboxBtn.disabled = !hasSelection;
+        deleteSelectedOutboxBtn.classList.toggle('opacity-50', !hasSelection);
+        deleteSelectedOutboxBtn.classList.toggle('cursor-not-allowed', !hasSelection);
+    }
+
+    // Function to update outbox select all checkbox state
+    function updateOutboxSelectAllState() {
+        const visibleCheckboxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"])');
+        const checkedVisibleBoxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"]):checked');
+        const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedVisibleBoxes.length;
+        const someVisibleChecked = checkedVisibleBoxes.length > 0;
+
+        selectAllOutboxCheckbox.checked = allVisibleChecked;
+        selectAllOutboxCheckbox.indeterminate = someVisibleChecked && !allVisibleChecked;
+    }
+
+    // Outbox select all functionality
+    selectAllOutboxCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        const visibleCheckboxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"])');
+        visibleCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateOutboxDeleteButtonState();
+    });
+
+    // Outbox select all button functionality
+    selectAllOutboxBtn.addEventListener('click', function() {
+        const visibleCheckboxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"])');
+        const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+
+        if (allChecked) {
+            // Deselect all
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            this.textContent = 'Select All';
+        } else {
+            // Select all
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            this.textContent = 'Deselect All';
+        }
+        updateOutboxSelectAllState();
+        updateOutboxDeleteButtonState();
+    });
+
+    // Outbox individual checkbox change handler
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('outbox-checkbox')) {
+            updateOutboxSelectAllState();
+            updateOutboxDeleteButtonState();
+
+            // Update select all button text
+            const visibleCheckboxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"])');
+            const checkedVisibleBoxes = document.querySelectorAll('.outbox-checkbox:not([style*="display: none"]):checked');
+            const allChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedVisibleBoxes.length;
+
+            selectAllOutboxBtn.textContent = allChecked ? 'Deselect All' : 'Select All';
+        }
+    });
+
+    // Delete selected outbox messages
+    deleteSelectedOutboxBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.outbox-checkbox:checked')).map(cb => cb.value);
+
+        if (selectedIds.length === 0) {
+            alert('Please select messages to delete.');
+            return;
+        }
+
+        const confirmMessage = selectedIds.length === 1
+            ? 'Are you sure you want to delete this queued message?'
+            : `Are you sure you want to delete ${selectedIds.length} queued messages?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        // Show loading state
+        deleteSelectedOutboxBtn.disabled = true;
+        deleteSelectedOutboxBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-2 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Deleting...
+        `;
+
+        // Send delete request
+        fetch('/api/outbox/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ message_ids: selectedIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove deleted rows from DOM
+                selectedIds.forEach(id => {
+                    const row = document.querySelector(`[data-message-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                    }
+                });
+
+                // Update counters and states
+                const remainingRows = document.querySelectorAll('.outbox-row').length;
+                const showingCount = document.getElementById('showing-count');
+                if (document.getElementById('tab-outbox').classList.contains('active')) {
+                    showingCount.textContent = remainingRows;
+                }
+
+                // Reset checkboxes and buttons
+                document.querySelectorAll('.outbox-checkbox').forEach(cb => cb.checked = false);
+                updateOutboxSelectAllState();
+                updateOutboxDeleteButtonState();
+                selectAllOutboxBtn.textContent = 'Select All';
+
+                // Show success message
+                showNotification(`Successfully deleted ${selectedIds.length} message(s)`, 'success');
+            } else {
+                showNotification(data.error || 'Failed to delete messages', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showNotification('An error occurred while deleting messages', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            deleteSelectedOutboxBtn.disabled = false;
+            deleteSelectedOutboxBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Selected
+            `;
+        });
+    });
+
+    // Function to open outbox modal with message details
+    function openOutboxModal(row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 6) return; // Skip if not a data row
+
+        // Extract data from table cells
+        const dateTime = cells[1].textContent.trim(); // Index 1 because checkbox is at index 0
+        const device = cells[2].textContent.trim();
+        const recipient = cells[3].textContent.trim();
+        const message = cells[4].textContent.trim();
+        const statusElement = cells[5].querySelector('span');
+        const statusText = statusElement ? statusElement.textContent.trim() : '';
+        const statusClass = statusElement ? statusElement.className : '';
+
+        // Fill modal with data
+        outboxModalDateTime.textContent = dateTime;
+        outboxModalDevice.textContent = device;
+        outboxModalRecipient.textContent = recipient;
+        outboxModalMessage.textContent = message;
+        outboxModalStatus.textContent = statusText;
+        outboxModalStatus.className = statusClass;
+
+        // Show modal
+        outboxModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    // Function to close outbox modal
+    function closeOutboxModal() {
+        outboxModal.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+
+    // Add click event listeners to outbox table rows (but not checkboxes)
+    const outboxRows = document.querySelectorAll('.outbox-row');
+    outboxRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Don't open modal if clicking on checkbox
+            if (e.target.type !== 'checkbox') {
+                openOutboxModal(this);
+            }
+        });
+    });
+
+    // Close outbox modal event listeners
+    closeOutboxModalBtn.addEventListener('click', closeOutboxModal);
+    closeOutboxModalFooterBtn.addEventListener('click', closeOutboxModal);
+
+    // Close outbox modal when clicking outside
+    outboxModal.addEventListener('click', function(e) {
+        if (e.target === outboxModal) {
+            closeOutboxModal();
+        }
+    });
+
+    // Close outbox modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !outboxModal.classList.contains('hidden')) {
+            closeOutboxModal();
+        }
+    });
+
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+
+        if (type === 'success') {
+            notification.classList.add('bg-green-500', 'text-white');
+        } else if (type === 'error') {
+            notification.classList.add('bg-red-500', 'text-white');
+        } else {
+            notification.classList.add('bg-blue-500', 'text-white');
+        }
+
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                     type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+                </svg>
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Sent Messages Modal functionality
+    const sentModal = document.getElementById('sent-modal');
+    const closeSentModalBtn = document.getElementById('close-sent-modal');
+    const closeSentModalFooterBtn = document.getElementById('close-sent-modal-footer');
+    const sentModalDateTime = document.getElementById('sent-modal-datetime');
+    const sentModalDevice = document.getElementById('sent-modal-device');
+    const sentModalRecipient = document.getElementById('sent-modal-recipient');
+    const sentModalDelivery = document.getElementById('sent-modal-delivery');
+    const sentModalStatus = document.getElementById('sent-modal-status');
+    const sentModalMessage = document.getElementById('sent-modal-message');
+
+    // Function to open sent modal with message details
+    function openSentModal(row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 7) return; // Skip if not a data row
+
+        // Extract data from table cells (adjusted for checkbox column)
+        const dateTime = cells[1].textContent.trim(); // Index 1 because checkbox is at index 0
+        const device = cells[2].textContent.trim();
+        const recipient = cells[3].textContent.trim();
+        const message = cells[4].textContent.trim();
+        const deliveryTime = cells[5].textContent.trim();
+        const statusElement = cells[6].querySelector('span');
+        const statusText = statusElement ? statusElement.textContent.trim() : '';
+        const statusClass = statusElement ? statusElement.className : '';
+
+        // Fill modal with data
+        sentModalDateTime.textContent = dateTime;
+        sentModalDevice.textContent = device;
+        sentModalRecipient.textContent = recipient;
+        sentModalDelivery.textContent = deliveryTime;
+        sentModalMessage.textContent = message;
+        sentModalStatus.textContent = statusText;
+        sentModalStatus.className = statusClass;
+
+        // Show modal
+        sentModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    // Function to close sent modal
+    function closeSentModal() {
+        sentModal.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+
+    // Add click event listeners to sent table rows (but not checkboxes)
+    const sentRows = document.querySelectorAll('.sent-row');
+    sentRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Don't open modal if clicking on checkbox
+            if (e.target.type !== 'checkbox') {
+                openSentModal(this);
+            }
+        });
+    });
+
+    // Close sent modal event listeners
+    closeSentModalBtn.addEventListener('click', closeSentModal);
+    closeSentModalFooterBtn.addEventListener('click', closeSentModal);
+
+    // Close sent modal when clicking outside
+    sentModal.addEventListener('click', function(e) {
+        if (e.target === sentModal) {
+            closeSentModal();
+        }
+    });
+
+    // Close sent modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !sentModal.classList.contains('hidden')) {
+            closeSentModal();
+        }
+    });
+
+    // Sent Messages Delete functionality
+    const selectAllSentCheckbox = document.getElementById('select-all-sent');
+    const sentCheckboxes = document.querySelectorAll('.sent-checkbox');
+    const deleteSelectedSentBtn = document.getElementById('delete-selected-sent');
+
+    // Select all sent messages
+    selectAllSentCheckbox.addEventListener('change', function() {
+        sentCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSentDeleteButton();
+    });
+
+    // Individual sent checkbox change
+    sentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.sent-checkbox:checked').length;
+            const totalCount = sentCheckboxes.length;
+
+            selectAllSentCheckbox.checked = checkedCount === totalCount;
+            selectAllSentCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+
+            updateSentDeleteButton();
+        });
+    });
+
+    // Update sent delete button state
+    function updateSentDeleteButton() {
+        const checkedCount = document.querySelectorAll('.sent-checkbox:checked').length;
+        deleteSelectedSentBtn.disabled = checkedCount === 0;
+
+        if (checkedCount === 0) {
+            deleteSelectedSentBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Selected
+            `;
+        } else {
+            deleteSelectedSentBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Selected (${checkedCount})
+            `;
+        }
+    }
+
+    // Delete selected sent messages
+    deleteSelectedSentBtn.addEventListener('click', async function() {
+        const checkedBoxes = document.querySelectorAll('.sent-checkbox:checked');
+        if (checkedBoxes.length === 0) return;
+
+        const messageIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-message-id'));
+
+        if (!confirm(`Are you sure you want to delete ${messageIds.length} sent message(s)? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            deleteSelectedSentBtn.disabled = true;
+            deleteSelectedSentBtn.textContent = 'Deleting...';
+
+            const response = await fetch('/api/sent/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ message_ids: messageIds })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showNotification(`Successfully deleted ${result.deleted_count} sent message(s)`, 'success');
+                // Reload page to refresh the table
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification(result.error || 'Failed to delete sent messages', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error occurred', 'error');
+        } finally {
+            deleteSelectedSentBtn.disabled = false;
+            updateSentDeleteButton();
         }
     });
 });

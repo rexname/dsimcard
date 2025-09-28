@@ -20,20 +20,35 @@
                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
         </div>
 
-        <!-- Device Filter -->
-        <div class="flex items-center space-x-4">
-            <div class="flex items-center">
-                <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                </svg>
-                <label for="device-filter" class="text-sm font-medium text-gray-700">Filter by Device:</label>
+        <!-- Device Filter and Actions -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    <label for="device-filter" class="text-sm font-medium text-gray-700">Filter by Device:</label>
+                </div>
+                <select id="device-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                    <option value="">All Devices</option>
+                    {% for phone in phones %}
+                    <option value="{{ phone.ID }}">{{ phone.ID }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <select id="device-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
-                <option value="">All Devices</option>
-                {% for phone in phones %}
-                <option value="{{ phone.ID }}">{{ phone.ID }}</option>
-                {% endfor %}
-            </select>
+
+            <!-- Delete Actions -->
+            <div class="flex items-center space-x-3">
+                <button id="select-all-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    Select All
+                </button>
+                <button id="delete-selected-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete Selected
+                </button>
+            </div>
         </div>
     </div>
 
@@ -43,6 +58,9 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="select-all-checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
@@ -52,7 +70,10 @@
                 </thead>
                 <tbody id="inbox-list" class="bg-white divide-y divide-gray-200">
                     {% for sms in inbox %}
-                    <tr class="hover:bg-gray-50 transition-colors duration-150 table-row cursor-pointer">
+                    <tr class="hover:bg-gray-50 transition-colors duration-150 table-row cursor-pointer message-row" data-message-id="{{ sms.ID }}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <input type="checkbox" class="message-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" value="{{ sms.ID }}">
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ sms.ReceivingDateTime.strftime('%Y-%m-%d %H:%M:%S') if sms.ReceivingDateTime else 'N/A' }}
                         </td>
@@ -76,7 +97,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center">
+                        <td colspan="6" class="px-6 py-12 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                             </svg>
@@ -204,6 +225,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalStatus = document.getElementById('modal-status');
     const modalMessage = document.getElementById('modal-message');
 
+    // Delete functionality elements
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const messageCheckboxes = document.querySelectorAll('.message-checkbox');
+
     // Check URL parameters for auto-filtering
     const urlParams = new URLSearchParams(window.location.search);
     const deviceParam = urlParams.get('device');
@@ -216,17 +243,203 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
+    // Function to update delete button state
+    function updateDeleteButtonState() {
+        const checkedBoxes = document.querySelectorAll('.message-checkbox:checked');
+        const hasSelection = checkedBoxes.length > 0;
+        deleteSelectedBtn.disabled = !hasSelection;
+        deleteSelectedBtn.classList.toggle('opacity-50', !hasSelection);
+        deleteSelectedBtn.classList.toggle('cursor-not-allowed', !hasSelection);
+    }
+
+    // Function to update select all checkbox state
+    function updateSelectAllState() {
+        const visibleCheckboxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"])');
+        const checkedVisibleBoxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"]):checked');
+        const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedVisibleBoxes.length;
+        const someVisibleChecked = checkedVisibleBoxes.length > 0;
+
+        selectAllCheckbox.checked = allVisibleChecked;
+        selectAllCheckbox.indeterminate = someVisibleChecked && !allVisibleChecked;
+    }
+
+    // Select all functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        const visibleCheckboxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"])');
+        visibleCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateDeleteButtonState();
+    });
+
+    // Select all button functionality
+    selectAllBtn.addEventListener('click', function() {
+        const visibleCheckboxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"])');
+        const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+
+        if (allChecked) {
+            // Deselect all
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            this.textContent = 'Select All';
+        } else {
+            // Select all
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            this.textContent = 'Deselect All';
+        }
+        updateSelectAllState();
+        updateDeleteButtonState();
+    });
+
+    // Individual checkbox change handler
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('message-checkbox')) {
+            updateSelectAllState();
+            updateDeleteButtonState();
+
+            // Update select all button text
+            const visibleCheckboxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"])');
+            const checkedVisibleBoxes = document.querySelectorAll('.message-checkbox:not([style*="display: none"]):checked');
+            const allChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedVisibleBoxes.length;
+
+            selectAllBtn.textContent = allChecked ? 'Deselect All' : 'Select All';
+        }
+    });
+
+    // Delete selected messages
+    deleteSelectedBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.message-checkbox:checked')).map(cb => cb.value);
+
+        if (selectedIds.length === 0) {
+            alert('Please select messages to delete.');
+            return;
+        }
+
+        const confirmMessage = selectedIds.length === 1
+            ? 'Are you sure you want to delete this message?'
+            : `Are you sure you want to delete ${selectedIds.length} messages?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        // Show loading state
+        deleteSelectedBtn.disabled = true;
+        deleteSelectedBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-2 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Deleting...
+        `;
+
+        // Send delete request
+        fetch('/api/inbox/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ message_ids: selectedIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove deleted rows from DOM
+                selectedIds.forEach(id => {
+                    const row = document.querySelector(`[data-message-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                    }
+                });
+
+                // Update counters and states
+                const remainingRows = document.querySelectorAll('.message-row').length;
+                showingCount.textContent = remainingRows;
+
+                // Reset checkboxes and buttons
+                document.querySelectorAll('.message-checkbox').forEach(cb => cb.checked = false);
+                updateSelectAllState();
+                updateDeleteButtonState();
+                selectAllBtn.textContent = 'Select All';
+
+                // Show success message
+                showNotification(`Successfully deleted ${selectedIds.length} message(s)`, 'success');
+            } else {
+                showNotification(data.error || 'Failed to delete messages', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showNotification('An error occurred while deleting messages', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            deleteSelectedBtn.disabled = false;
+            deleteSelectedBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Selected
+            `;
+        });
+    });
+
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+
+        if (type === 'success') {
+            notification.classList.add('bg-green-500', 'text-white');
+        } else if (type === 'error') {
+            notification.classList.add('bg-red-500', 'text-white');
+        } else {
+            notification.classList.add('bg-blue-500', 'text-white');
+        }
+
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                     type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+                </svg>
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
     // Function to open modal with message details
     function openMessageModal(row) {
         const cells = row.querySelectorAll('td');
-        if (cells.length < 5) return; // Skip if not a data row
+        if (cells.length < 6) return; // Skip if not a data row
 
         // Extract data from table cells
-        const dateTime = cells[0].textContent.trim();
-        const device = cells[1].textContent.trim();
-        const sender = cells[2].textContent.trim();
-        const message = cells[3].textContent.trim();
-        const statusElement = cells[4].querySelector('span');
+        const dateTime = cells[1].textContent.trim(); // Index 1 because checkbox is at index 0
+        const device = cells[2].textContent.trim();
+        const sender = cells[3].textContent.trim();
+        const message = cells[4].textContent.trim();
+        const statusElement = cells[5].querySelector('span');
         const statusText = statusElement ? statusElement.textContent.trim() : '';
         const statusClass = statusElement ? statusElement.className : '';
 
@@ -249,14 +462,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = 'auto'; // Restore scrolling
     }
 
-    // Add click event listeners to table rows
+    // Add click event listeners to table rows (but not checkboxes)
     originalRows.forEach((row, index) => {
         // Skip the "no messages" row
         if (index === originalRows.length - 1 && row.querySelector('td[colspan]')) {
             return;
         }
 
-        row.addEventListener('click', function() {
+        row.addEventListener('click', function(e) {
+            // Don't open modal if clicking on checkbox
+            if (e.target.type === 'checkbox') {
+                return;
+            }
             openMessageModal(this);
         });
     });
@@ -293,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textContent = row.textContent.toLowerCase();
-            const deviceCell = row.cells[1]; // Device column is now index 1
+            const deviceCell = row.cells[2]; // Device column is now index 2 (after checkbox)
             const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
 
             const matchesSearch = textContent.includes(searchTerm);
@@ -312,6 +529,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (noMessagesRow) {
             noMessagesRow.style.display = visibleCount === 0 ? '' : 'none';
         }
+
+        // Update select all state and delete button after search
+        updateSelectAllState();
+        updateDeleteButtonState();
+        selectAllBtn.textContent = 'Select All';
     }
 
     searchInput.addEventListener('input', function(e) {
