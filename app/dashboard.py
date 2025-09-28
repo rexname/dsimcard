@@ -1,18 +1,26 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, current_app
+from flask_login import login_required, current_user
+from .models import Phones, UserDevice
+import re
+import json
+import os
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
 
-
-from .models import Phones
-from flask import current_app
-import re
-
-
 @dashboard_bp.route('/')
+@login_required
 def index():
-    # Ambil semua data phones
-    phones = Phones.query.all()
+    from .models import Phones, UserDevice
+    
+    # Jika admin, tampilkan semua devices
+    if current_user.is_admin:
+        phones = Phones.query.all()
+    else:
+        # Ambil device IDs yang di-assign ke user
+        assigned_device_ids = [ud.phone_id for ud in UserDevice.query.filter_by(user_id=current_user.id).all()]
+        phones = Phones.query.filter(Phones.ID.in_(assigned_device_ids)).all()
+    
     # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
     def natural_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
@@ -25,6 +33,7 @@ def index():
     return render_template('dashboard/index.html', phones=phones, device_phone_numbers=device_phone_numbers)
 
 @dashboard_bp.route('/send_sms', methods=['GET'])
+@login_required
 def send_sms_select():
     # Ambil semua data phones untuk dipilih
     phones = Phones.query.all()
@@ -154,6 +163,7 @@ def api_messages(phone_id):
 
 # Route Inbox
 @dashboard_bp.route('/inbox')
+@login_required
 def inbox():
     from .models import Inbox
     inbox = Inbox.query.order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
@@ -239,6 +249,7 @@ def delete_sent_messages():
 
 # Route Outbox
 @dashboard_bp.route('/outbox')
+@login_required
 def outbox():
     from .models import Outbox, Sentitems
     outbox = Outbox.query.order_by(Outbox.InsertIntoDB.desc()).limit(100).all()
@@ -277,6 +288,7 @@ def get_device_phone_number(device_id):
     return device_phone_numbers.get(device_id, '')
 
 @dashboard_bp.route('/setting', methods=['GET', 'POST'])
+@login_required
 def setting():
     from .models import Phones
     
