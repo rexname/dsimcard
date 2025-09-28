@@ -93,3 +93,49 @@ def api_messages(phone_id):
         } for sms in inbox
     ]
     return jsonify({'sent': sent_data, 'inbox': inbox_data})
+
+# Route Inbox
+@dashboard_bp.route('/inbox')
+def inbox():
+    from .models import Inbox
+    inbox = Inbox.query.order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
+    return render_template('dashboard/inbox.html', inbox=inbox)
+
+# Route Outbox
+@dashboard_bp.route('/outbox')
+def outbox():
+    from .models import Outbox, Sentitems
+    outbox = Outbox.query.order_by(Outbox.InsertIntoDB.desc()).limit(100).all()
+    sentitems = Sentitems.query.order_by(Sentitems.SendingDateTime.desc()).limit(100).all()
+    return render_template('dashboard/outbox.html', outbox=outbox, sentitems=sentitems)
+
+# Route Setting
+import json
+import os
+SETTINGS_PATH = os.path.join(os.path.dirname(__file__), 'settings.json')
+
+def load_settings():
+    if os.path.exists(SETTINGS_PATH):
+        with open(SETTINGS_PATH) as f:
+            return json.load(f)
+    return {"phone_id": ""}
+
+def save_settings(data):
+    with open(SETTINGS_PATH, 'w') as f:
+        json.dump(data, f)
+
+@dashboard_bp.route('/setting', methods=['GET', 'POST'])
+def setting():
+    message = None
+    settings = load_settings()
+    current_id = settings.get('phone_id', '')
+    if request.method == 'POST':
+        new_id = request.form.get('phone_id')
+        if new_id:
+            settings['phone_id'] = new_id
+            save_settings(settings)
+            message = 'Phone ID berhasil diupdate.'
+            current_id = new_id
+        else:
+            message = 'Phone ID tidak boleh kosong.'
+    return render_template('dashboard/setting.html', current_id=current_id, message=message)
