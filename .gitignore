@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Flask
+instance/
+*.db
+*.sqlite3
+
+# Jinja2
+*.jinja2-cache/
+
+# Uvicorn
+*.pid
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
+
+# PyCharm
+.idea/
+
+# Test and coverage
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
+pytest_cache/
+__pypackages__/
+
+# Others
+*.swp
+*.swo
+*.bak
+*.tmp

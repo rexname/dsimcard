@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="max-w-5xl mx-auto py-8">
+        <h2 class="text-xl font-semibold mb-4">Device List (Phones)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for phone in phones %}
+            <div class="bg-white shadow rounded-lg p-6 flex flex-col">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-bold text-lg">ID:</span>
+                    <span class="text-gray-700">{{ phone.ID }}</span>
+                </div>
+                <!--<div class="mb-2 flex items-center justify-between">
+                    <span class="font-bold text-lg">IMEI:</span>
+                    <span class="text-gray-700">{{ phone.IMEI }}</span>
+                </div>
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-semibold">IMSI:</span>
+                    <span class="text-gray-700">{{ phone.IMSI }}</span>
+                </div> -->
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-semibold">NetName:</span>
+                    <span class="text-gray-700">
+                        {% if phone.NetName %}{{ phone.NetName|upper }}{% else %}UNKNOWN{% endif %}
+                    </span>
+                </div>
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-semibold">Signal:</span>
+                    <span class="text-gray-700">{{ phone.Signal }}</span>
+                </div>
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-semibold">Sent:</span>
+                    <span class="text-gray-700">{{ phone.Sent }}</span>
+                </div>
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="font-semibold">Received:</span>
+                    <span class="text-gray-700">{{ phone.Received }}</span>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <a href="{{ url_for('dashboard.send_sms', phone_id=phone.ID) }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Kirim Pesan</a>
+                    <a href="{{ url_for('dashboard.view_sms', phone_id=phone.ID) }}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">Lihat Pesan</a>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

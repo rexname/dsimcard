@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesan Device {{ phone_id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">Pesan untuk Device: {{ phone_id }}</h1>
+    <a href="{{ url_for('dashboard.index') }}" class="mb-6 inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">Kembali ke Dashboard</a>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h2 class="text-lg font-semibold mb-2">Pesan Terkirim (Sentitems)</h2>
+                <div class="space-y-4" id="sentitems-list">
+                    {% for sms in sent %}
+                    <div class="border rounded p-4 bg-white shadow">
+                        <div class="text-sm text-gray-500 mb-1">{{ sms.SendingDateTime }}</div>
+                        <div class="font-bold">To: {{ sms.DestinationNumber }}</div>
+                        <div class="mb-2">{{ sms.TextDecoded }}</div>
+                        <div class="text-xs text-gray-400">Status: {{ sms.Status }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-gray-400">Tidak ada pesan terkirim.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold mb-2">Pesan Masuk (Inbox)</h2>
+                <div class="space-y-4" id="inbox-list">
+                    {% for sms in inbox %}
+                    <div class="border rounded p-4 bg-white shadow">
+                        <div class="text-sm text-gray-500 mb-1">{{ sms.ReceivingDateTime }}</div>
+                        <div class="font-bold">From: {{ sms.SenderNumber }}</div>
+                        <div class="mb-2">{{ sms.TextDecoded }}</div>
+                        <div class="text-xs text-gray-400">Status: {{ sms.Status }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-gray-400">Tidak ada pesan masuk.</div>
+                    {% endfor %}
+                </div>
+            </div>
+    </div>
+    </div>
+    <script>
+    function renderMessages(data) {
+    const sentList = document.getElementById('sentitems-list');
+    const inboxList = document.getElementById('inbox-list');
+    sentList.innerHTML = '';
+    inboxList.innerHTML = '';
+    if (data.sent.length === 0) {
+            sentList.innerHTML = '<div class="text-gray-400">Tidak ada pesan terkirim.</div>';
+    } else {
+            data.sent.forEach(sms => {
+                sentList.innerHTML += `<div class='border rounded p-4 bg-white shadow'>
+                    <div class='text-sm text-gray-500 mb-1'>${sms.SendingDateTime}</div>
+                    <div class='font-bold'>To: ${sms.DestinationNumber}</div>
+                    <div class='mb-2'>${sms.TextDecoded}</div>
+                    <div class='text-xs text-gray-400'>Status: ${sms.Status}</div>
+                </div>`;
+            });
+    }
+    if (data.inbox.length === 0) {
+            inboxList.innerHTML = '<div class="text-gray-400">Tidak ada pesan masuk.</div>';
+    } else {
+            data.inbox.forEach(sms => {
+                inboxList.innerHTML += `<div class='border rounded p-4 bg-white shadow'>
+                    <div class='text-sm text-gray-500 mb-1'>${sms.ReceivingDateTime}</div>
+                    <div class='font-bold'>From: ${sms.SenderNumber}</div>
+                    <div class='mb-2'>${sms.TextDecoded}</div>
+                    <div class='text-xs text-gray-400'>Status: ${sms.Status}</div>
+                </div>`;
+            });
+    }
+    }
+    function pollMessages() {
+    fetch(`/api/messages/{{ phone_id }}`)
+            .then(res => res.json())
+            .then(data => renderMessages(data));
+    }
+    setInterval(pollMessages, 2000);
+    </script>
+</body>
+</html>
