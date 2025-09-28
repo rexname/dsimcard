@@ -21,23 +21,39 @@
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ phone.ID }}</h3>
-                        <p class="text-sm text-gray-500">{{ phone.NetName|default('Unknown Network')|upper }}</p>
+                        <p class="text-sm text-gray-500">{% if phone.NetName %}{{ phone.NetName|upper }}{% else %}UNKNOWN{% endif %}</p>
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full {% if phone.Signal > 10 %}bg-green-400{% elif phone.Signal > 0 %}bg-yellow-400{% else %}bg-red-400{% endif %}"></div>
+                    {# Skala warna berdasarkan dBm: 
+                       - <= -70 dBm: hijau (bagus)
+                       - -71 s/d -85 dBm: kuning (cukup)
+                       - < -85 dBm: merah (lemah)
+                    #}
+                    <div class="w-3 h-3 rounded-full 
+                        {% if phone.Signal <= -70 %}
+                            bg-green-400
+                        {% elif phone.Signal <= -85 %}
+                            bg-yellow-400
+                        {% else %}
+                            bg-red-400
+                        {% endif %}
+                    "></div>
+                    <span class="ml-2 text-xs text-gray-500">{{ phone.Signal }} dBm</span>
                 </div>
             </div>
 
             <div class="space-y-3 mb-6">
-                <div class="flex justify-between items-center">
+                <!--<div class="flex justify-between items-center">
                     <span class="text-sm font-medium text-gray-600">Signal Strength</span>
-                    <span class="text-sm font-semibold text-gray-900">{{ phone.Signal }}%</span>
-                </div>
+                    {% set percent = ((phone.Signal + 120) * 100 // 60 // 100) %}
+                    <span class="text-sm font-semibold text-gray-900">
+                        {{ percent if percent is not none else 0 }}%
+                    </span>
+                </div> 
                 <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ phone.Signal }}%"></div>
-                </div>
-
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ percent if percent is not none else 0 }}%;"></div>
+                </div> -->
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <div class="text-center">
                         <div class="text-2xl font-bold text-green-600">{{ phone.Sent }}</div>
