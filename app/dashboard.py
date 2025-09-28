@@ -19,6 +19,59 @@ def index():
     phones = sorted(phones, key=natural_key)
     return render_template('dashboard/index.html', phones=phones)
 
+@dashboard_bp.route('/send_sms', methods=['GET'])
+def send_sms_select():
+    # Ambil semua data phones untuk dipilih
+    phones = Phones.query.all()
+    # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
+    def natural_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
+    phones = sorted(phones, key=natural_key)
+    return render_template('dashboard/send_sms_select.html', phones=phones)
+
+@dashboard_bp.route('/send_sms', methods=['POST'])
+def send_sms_ajax():
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        creator_id = request.form.get('creator_id')
+        destination = request.form.get('destination')
+        text = request.form.get('text')
+
+        if not all([creator_id, destination, text]):
+            return jsonify({'error': 'All fields are required'}), 400
+
+        try:
+            from datetime import datetime
+            sms = Outbox(
+                DestinationNumber=destination,
+                TextDecoded=text,
+                CreatorID=creator_id,
+                Status='Reserved',
+                UpdatedInDB=datetime.now(),
+                InsertIntoDB=datetime.now(),
+                SendingDateTime=datetime.now(),
+                SendBefore='23:59:59',
+                SendAfter='00:00:00',
+                Coding='Default_No_Compression',
+                UDH=None,
+                Class=-1,
+                MultiPart=False,
+                RelativeValidity=-1,
+                SenderID=None,
+                SendingTimeOut=datetime.now(),
+                DeliveryReport='default',
+                Retries=0,
+                Priority=0,
+                StatusCode=-1
+            )
+            db.session.add(sms)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'SMS queued successfully'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to queue SMS'}), 500
+    else:
+        return jsonify({'error': 'Invalid request'}), 400
+
 # Route untuk kirim pesan
 
 from .models import Outbox
@@ -107,7 +160,12 @@ def outbox():
     from .models import Outbox, Sentitems
     outbox = Outbox.query.order_by(Outbox.InsertIntoDB.desc()).limit(100).all()
     sentitems = Sentitems.query.order_by(Sentitems.SendingDateTime.desc()).limit(100).all()
-    return render_template('dashboard/outbox.html', outbox=outbox, sentitems=sentitems)
+    phones = Phones.query.all()
+    # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
+    def natural_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
+    phones = sorted(phones, key=natural_key)
+    return render_template('dashboard/outbox.html', outbox=outbox, sentitems=sentitems, phones=phones)
 
 # Route Setting
 import json
