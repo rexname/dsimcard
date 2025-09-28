@@ -22,6 +22,9 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ phone.ID }}</h3>
                         <p class="text-sm text-gray-500">{% if phone.NetName %}{{ phone.NetName|upper }}{% else %}UNKNOWN{% endif %}</p>
+                        {% if device_phone_numbers.get(phone.ID) %}
+                        <p class="text-xs text-blue-600 font-medium">{{ device_phone_numbers.get(phone.ID) }}</p>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="flex items-center">

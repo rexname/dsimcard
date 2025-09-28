@@ -17,7 +17,12 @@ def index():
     def natural_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
     phones = sorted(phones, key=natural_key)
-    return render_template('dashboard/index.html', phones=phones)
+    
+    # Load device phone numbers from settings
+    settings = load_settings()
+    device_phone_numbers = settings.get('device_phone_numbers', {})
+    
+    return render_template('dashboard/index.html', phones=phones, device_phone_numbers=device_phone_numbers)
 
 @dashboard_bp.route('/send_sms', methods=['GET'])
 def send_sms_select():
@@ -157,7 +162,12 @@ def inbox():
     def natural_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
     phones = sorted(phones, key=natural_key)
-    return render_template('dashboard/inbox.html', inbox=inbox, phones=phones)
+    
+    # Load device phone numbers from settings
+    settings = load_settings()
+    device_phone_numbers = settings.get('device_phone_numbers', {})
+    
+    return render_template('dashboard/inbox.html', inbox=inbox, phones=phones, device_phone_numbers=device_phone_numbers)
 
 # API Route to delete outbox messages
 @dashboard_bp.route('/api/outbox/delete', methods=['POST'])
@@ -238,7 +248,12 @@ def outbox():
     def natural_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
     phones = sorted(phones, key=natural_key)
-    return render_template('dashboard/outbox.html', outbox=outbox, sentitems=sentitems, phones=phones)
+    
+    # Load device phone numbers from settings
+    settings = load_settings()
+    device_phone_numbers = settings.get('device_phone_numbers', {})
+    
+    return render_template('dashboard/outbox.html', outbox=outbox, sentitems=sentitems, phones=phones, device_phone_numbers=device_phone_numbers)
 
 # Route Setting
 import json
@@ -249,24 +264,50 @@ def load_settings():
     if os.path.exists(SETTINGS_PATH):
         with open(SETTINGS_PATH) as f:
             return json.load(f)
-    return {"phone_id": ""}
+    return {"device_phone_numbers": {}}
 
 def save_settings(data):
     with open(SETTINGS_PATH, 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=2)
+
+def get_device_phone_number(device_id):
+    """Get phone number for a specific device"""
+    settings = load_settings()
+    device_phone_numbers = settings.get('device_phone_numbers', {})
+    return device_phone_numbers.get(device_id, '')
 
 @dashboard_bp.route('/setting', methods=['GET', 'POST'])
 def setting():
+    from .models import Phones
+    
+    phones = Phones.query.all()
+    # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
+    def natural_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s.ID)]
+    phones = sorted(phones, key=natural_key)
+    
     message = None
     settings = load_settings()
-    current_id = settings.get('phone_id', '')
+    device_phone_numbers = settings.get('device_phone_numbers', {})
+    
     if request.method == 'POST':
-        new_id = request.form.get('phone_id')
-        if new_id:
-            settings['phone_id'] = new_id
+        action = request.form.get('action')
+        
+        if action == 'update_phone_numbers':
+            # Update phone numbers for devices
+            updated_numbers = {}
+            for phone in phones:
+                phone_number_key = f'phone_number_{phone.ID}'
+                new_number = request.form.get(phone_number_key, '').strip()
+                if new_number:
+                    updated_numbers[phone.ID] = new_number
+            
+            settings['device_phone_numbers'] = updated_numbers
             save_settings(settings)
-            message = 'Phone ID berhasil diupdate.'
-            current_id = new_id
-        else:
-            message = 'Phone ID tidak boleh kosong.'
-    return render_template('dashboard/setting.html', current_id=current_id, message=message)
+            device_phone_numbers = updated_numbers
+            message = 'Device phone numbers updated successfully.'
+    
+    return render_template('dashboard/setting.html', 
+                         message=message, 
+                         phones=phones,
+                         device_phone_numbers=device_phone_numbers)

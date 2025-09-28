@@ -63,6 +63,7 @@
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -79,6 +80,9 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ sms.RecipientID or 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                            {{ device_phone_numbers.get(sms.RecipientID, '-') if sms.RecipientID else '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ sms.SenderNumber }}
@@ -97,7 +101,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
+                        <td colspan="7" class="px-6 py-12 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                             </svg>
@@ -432,14 +436,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to open modal with message details
     function openMessageModal(row) {
         const cells = row.querySelectorAll('td');
-        if (cells.length < 6) return; // Skip if not a data row
+        if (cells.length < 7) return; // Skip if not a data row
 
         // Extract data from table cells
         const dateTime = cells[1].textContent.trim(); // Index 1 because checkbox is at index 0
-        const device = cells[2].textContent.trim();
-        const sender = cells[3].textContent.trim();
-        const message = cells[4].textContent.trim();
-        const statusElement = cells[5].querySelector('span');
+        const device = cells[3].textContent.trim(); // Index 3 (after checkbox, date, phone number)
+        const sender = cells[4].textContent.trim();
+        const message = cells[5].textContent.trim();
+        const statusElement = cells[6].querySelector('span');
         const statusText = statusElement ? statusElement.textContent.trim() : '';
         const statusClass = statusElement ? statusElement.className : '';
 
@@ -510,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textContent = row.textContent.toLowerCase();
-            const deviceCell = row.cells[2]; // Device column is now index 2 (after checkbox)
+            const deviceCell = row.cells[3]; // Device column is now index 3 (after checkbox, date, phone number)
             const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
 
             const matchesSearch = textContent.includes(searchTerm);
