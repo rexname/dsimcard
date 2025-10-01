@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Extract data from table cells
         const dateTime = cells[1].textContent.trim(); // Index 1 because checkbox is at index 0
-        const device = cells[3].textContent.trim(); // Index 3 (after checkbox, date, phone number)
+        const device = cells[2].textContent.trim(); // Index 2 (after checkbox, date)
         const sender = cells[4].textContent.trim();
         const message = cells[5].textContent.trim();
         const statusElement = cells[6].querySelector('span');
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const textContent = row.textContent.toLowerCase();
-            const deviceCell = row.cells[3]; // Device column is now index 3 (after checkbox, date, phone number)
+            const deviceCell = row.cells[2]; // Device column is at index 2 (after checkbox, date)
             const deviceId = deviceCell ? deviceCell.textContent.trim() : '';
 
             const matchesSearch = textContent.includes(searchTerm);
