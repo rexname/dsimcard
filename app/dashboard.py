@@ -166,7 +166,16 @@ def api_messages(phone_id):
 @login_required
 def inbox():
     from .models import Inbox
-    inbox = Inbox.query.order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
+    
+    # Filter inbox messages based on user permissions
+    if current_user.is_admin:
+        # Admin sees all messages
+        inbox = Inbox.query.order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
+    else:
+        # Regular users only see messages from assigned devices
+        assigned_device_ids = [ud.phone_id for ud in UserDevice.query.filter_by(user_id=current_user.id).all()]
+        inbox = Inbox.query.filter(Inbox.RecipientID.in_(assigned_device_ids)).order_by(Inbox.ReceivingDateTime.desc()).limit(100).all()
+    
     phones = Phones.query.all()
     # Natural sort by ID (e.g. mp16p-1, mp16p-2, ..., mp16p-10)
     def natural_key(s):
@@ -246,6 +255,52 @@ def delete_sent_messages():
         db.session.rollback()
         current_app.logger.error(f'Error deleting sent messages: {str(e)}')
         return jsonify({'error': 'Failed to delete sent messages'}), 500
+
+# API Route to delete inbox messages
+@dashboard_bp.route('/api/inbox/delete', methods=['POST'])
+@login_required
+def delete_inbox_messages():
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        data = request.get_json()
+        message_ids = data.get('message_ids', [])
+
+        if not message_ids:
+            return jsonify({'error': 'No message IDs provided'}), 400
+
+        # Convert message_ids to integers
+        try:
+            message_ids = [int(mid) for mid in message_ids]
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid message IDs format'}), 400
+
+        from .models import Inbox
+
+        # Build query based on user permissions
+        query = Inbox.query.filter(Inbox.ID.in_(message_ids))
+        
+        if not current_user.is_admin:
+            # Regular users can only delete messages from assigned devices
+            assigned_device_ids = [ud.phone_id for ud in UserDevice.query.filter_by(user_id=current_user.id).all()]
+            query = query.filter(Inbox.RecipientID.in_(assigned_device_ids))
+
+        # Delete messages with the provided IDs
+        deleted_count = query.delete()
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {deleted_count} inbox message(s)',
+            'deleted_count': deleted_count
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Error deleting inbox messages: {str(e)}')
+        return jsonify({'error': 'Failed to delete inbox messages'}), 500
 
 # Route Outbox
 @dashboard_bp.route('/outbox')

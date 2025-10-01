@@ -1,0 +1,30 @@
+[Unit]
+Description=DSim Card Management System
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/dsimcard
+Environment=FLASK_ENV=production
+Environment=FLASK_DEBUG=0
+ExecStart=/root/dsimcard/start_app.sh
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=5
+
+# Security settings
+NoNewPrivileges=yes
+ReadWritePaths=/root/dsimcard
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dsimcard
+
+[Install]
+WantedBy=multi-user.target

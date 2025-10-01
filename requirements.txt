@@ -5,5 +5,5 @@ python-dotenv>=1.0
 Flask-Migrate>=4.0
 uvicorn>=0.22
 uvicorn[standard]>=0.23
-flask-login
-bcrypts
+flask-login>=0.6
+bcrypt>=5.0
